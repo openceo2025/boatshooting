@@ -10,6 +10,10 @@
         #opening { position: absolute; width: 100%; height: 100%; background: black; color: white; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         #ending { position: absolute; width: 100%; height: 100%; background: black; color: white; display: none; justify-content: center; align-items: center; flex-direction: column; }
         #ranking { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        #joystick, #lookArea { position: absolute; display: none; touch-action: none; }
+        #joystick { bottom: 20px; left: 20px; width: 120px; height: 120px; border-radius: 60px; background: rgba(255,255,255,0.2); }
+        #stick { position: absolute; width: 60px; height: 60px; top: 30px; left: 30px; border-radius: 30px; background: rgba(255,255,255,0.5); }
+        #lookArea { bottom: 0; right: 0; width: 50%; height: 100%; background: rgba(0,0,0,0); }
     </style>
 </head>
 <body>
@@ -18,6 +22,8 @@
         <button id="startBtn">Start Game</button>
     </div>
     <canvas id="canvas-container"></canvas>
+    <div id="joystick"><div id="stick"></div></div>
+    <div id="lookArea"></div>
     <div id="ending">
         <h2>Game Clear</h2>
         <button id="shareBtn">Share on Twitter</button>

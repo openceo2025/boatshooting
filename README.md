@@ -7,7 +7,7 @@ This repository contains a lightweight prototype for a browser-based shooting ga
 - **Opening Movie** -> **Gameplay** -> **Ranking** -> **Ending Movie** -> **SNS Sharing**
 - Minimal PlayCanvas setup using the FPS Starter Kit (assets should be added to `public`)
 - Simple ranking API using PHP and MySQL for LAMP environments
-- Designed for mobile browsers
+- Designed for mobile browsers with on-screen joystick and touch look controls
 
 ## Setup
 
@@ -41,7 +41,7 @@ CREATE TABLE scores (
 
 ## Running
 
-Open `public/index.html` in your browser. The page displays an opening screen. Tapping **Start Game** launches the PlayCanvas app. After the game ends, scores are exchanged with the PHP backend via AJAX, and a ranking list is displayed. The ending screen provides options to restart and share the game on Twitter.
+Open `public/index.html` in your browser. The page displays an opening screen. Tapping **Start Game** launches the PlayCanvas app. After the game ends, scores are exchanged with the PHP backend via AJAX, and a ranking list is displayed. The ending screen provides options to restart and share the game on Twitter. On touch devices, a joystick is shown for movement and dragging the right side rotates the camera. A quick tap on the right fires a shot.
 
 ## Notes
 

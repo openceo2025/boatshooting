@@ -11,11 +11,25 @@ var scoreForm = document.getElementById('scoreForm');
 var playerNameInput = document.getElementById('playerName');
 var playerScoreInput = document.getElementById('playerScore');
 var closeRanking = document.getElementById('closeRanking');
+var joystick = document.getElementById('joystick');
+var stick = document.getElementById('stick');
+var lookArea = document.getElementById('lookArea');
+var moveVec = { x: 0, y: 0 };
+var lookActive = false;
+var lookLastX = 0;
+var lookLastY = 0;
+var lookStartX = 0;
+var lookStartY = 0;
+var lookStartTime = 0;
 var app; // initialized on demand
 
 function startGame() {
     opening.style.display = 'none';
     canvasContainer.style.display = 'block';
+    joystick.style.display = 'block';
+    lookArea.style.display = 'block';
+    moveVec.x = 0;
+    moveVec.y = 0;
 
     if (!app) {
         app = new pc.Application(canvasContainer, {
@@ -86,6 +100,8 @@ function loadRanking() {
 
 function showEnding(score) {
     canvasContainer.style.display = 'none';
+    joystick.style.display = 'none';
+    lookArea.style.display = 'none';
     ending.style.display = 'flex';
     ranking.style.display = 'flex';
     playerScoreInput.value = score || 0;
@@ -104,6 +120,7 @@ PlayerControls.prototype.initialize = function () {
     this.app.mouse.disableContextMenu();
     this.app.mouse.on(pc.EVENT_MOUSEDOWN, this.onMouseDown, this);
     this.app.mouse.on(pc.EVENT_MOUSEMOVE, this.onMouseMove, this);
+    PlayerControls.instance = this;
     this.lastFire = 0;
     this.reachedGoal = false;
 };
@@ -118,9 +135,13 @@ PlayerControls.prototype.onMouseDown = function (e) {
 
 PlayerControls.prototype.onMouseMove = function (e) {
     if (pc.Mouse.isPointerLocked()) {
-        this.entity.rotate(0, -e.dx * this.lookSpeed, 0);
-        this.entity.rotateLocal(-e.dy * this.lookSpeed, 0, 0);
+        this.look(e.dx, e.dy);
     }
+};
+
+PlayerControls.prototype.look = function(dx, dy) {
+    this.entity.rotate(0, -dx * this.lookSpeed, 0);
+    this.entity.rotateLocal(-dy * this.lookSpeed, 0, 0);
 };
 
 PlayerControls.prototype.update = function (dt) {
@@ -130,6 +151,8 @@ PlayerControls.prototype.update = function (dt) {
     if (this.app.keyboard.isPressed(pc.KEY_S)) forward -= 1;
     if (this.app.keyboard.isPressed(pc.KEY_D)) right += 1;
     if (this.app.keyboard.isPressed(pc.KEY_A)) right -= 1;
+    forward += -moveVec.y;
+    right += moveVec.x;
 
     var move = new pc.Vec3();
     if (forward !== 0 || right !== 0) {
@@ -207,6 +230,74 @@ scoreForm.addEventListener('submit', function(e) {
 
 closeRanking.addEventListener('click', function() {
     ranking.style.display = 'none';
+});
+
+// joystick control
+joystick.addEventListener('touchstart', function(e) {
+    var t = e.touches[0];
+    joystick._startX = t.clientX;
+    joystick._startY = t.clientY;
+    stick.style.transform = 'translate(0px,0px)';
+    moveVec.x = 0;
+    moveVec.y = 0;
+});
+
+joystick.addEventListener('touchmove', function(e) {
+    var t = e.touches[0];
+    var dx = t.clientX - joystick._startX;
+    var dy = t.clientY - joystick._startY;
+    var radius = 40;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > radius) {
+        var scale = radius / dist;
+        dx *= scale;
+        dy *= scale;
+    }
+    stick.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    moveVec.x = dx / radius;
+    moveVec.y = dy / radius;
+    e.preventDefault();
+});
+
+joystick.addEventListener('touchend', function() {
+    moveVec.x = 0;
+    moveVec.y = 0;
+    stick.style.transform = 'translate(0px,0px)';
+});
+
+// look and tap to shoot
+lookArea.addEventListener('touchstart', function(e) {
+    var t = e.touches[0];
+    lookActive = true;
+    lookLastX = lookStartX = t.clientX;
+    lookLastY = lookStartY = t.clientY;
+    lookStartTime = Date.now();
+});
+
+lookArea.addEventListener('touchmove', function(e) {
+    if (!lookActive) return;
+    var t = e.touches[0];
+    var dx = t.clientX - lookLastX;
+    var dy = t.clientY - lookLastY;
+    lookLastX = t.clientX;
+    lookLastY = t.clientY;
+    if (PlayerControls.instance) {
+        PlayerControls.instance.look(dx, dy);
+    }
+    e.preventDefault();
+});
+
+lookArea.addEventListener('touchend', function() {
+    if (!lookActive) return;
+    lookActive = false;
+    var dt = Date.now() - lookStartTime;
+    var mx = Math.abs(lookLastX - lookStartX);
+    var my = Math.abs(lookLastY - lookStartY);
+    if (dt < 200 && mx < 5 && my < 5) {
+        if (PlayerControls.instance) {
+            PlayerControls.instance.shoot();
+        }
+    }
 });
 
 // This would be triggered when the game ends
