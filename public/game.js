@@ -22,6 +22,8 @@ var lookLastY = 0;
 var lookStartX = 0;
 var lookStartY = 0;
 var lookStartTime = 0;
+// timestamp when the current gameplay session started
+var gameStartTime = 0;
 // initialize PlayCanvas application upfront so scripts can be registered
 var app = new pc.Application(canvasContainer, {
     mouse: new pc.Mouse(canvasContainer),
@@ -42,6 +44,8 @@ function startGame() {
     lookArea.style.display = 'block';
     moveVec.x = 0;
     moveVec.y = 0;
+    // record when gameplay starts to calculate score later
+    gameStartTime = Date.now();
 
     if (!appStarted) {
         app.start();
@@ -191,7 +195,10 @@ PlayerControls.prototype.update = function (dt) {
             Math.abs(pos.z - gPos.z) < gScale.z / 2 &&
             pos.y <= gPos.y + 1) {
             this.reachedGoal = true;
-            showRanking();
+            var elapsed = (Date.now() - gameStartTime) / 1000;
+            // simple score: start from 1000 and decrease over time
+            var score = Math.max(1, Math.floor(1000 - elapsed * 10));
+            showRanking(score);
         }
     }
 };
