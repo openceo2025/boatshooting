@@ -47,10 +47,22 @@ function startGame() {
     ground.setLocalPosition(0, -0.5, 0);
     app.root.addChild(ground);
 
+    // goal area with red floor so the player can easily recognize it
+    var goalArea = new pc.Entity('goalArea');
+    goalArea.addComponent('model', { type: 'box' });
+    goalArea.setLocalScale(2, 0.1, 2);
+    goalArea.setLocalPosition(0, 0, -8);
+    var red = new pc.StandardMaterial();
+    red.diffuse.set(1, 0, 0);
+    red.update();
+    goalArea.model.material = red;
+    app.root.addChild(goalArea);
+
     var player = new pc.Entity('player');
     player.addComponent('camera', { clearColor: new pc.Color(0.4, 0.45, 0.5) });
     player.addComponent('script');
-    player.script.create('playerControls');
+    // pass the goal area entity to the player controller
+    player.script.create('playerControls', { attributes: { goalArea: goalArea } });
     player.setLocalPosition(0, 1, 5);
     app.root.addChild(player);
 }
@@ -81,12 +93,15 @@ var PlayerControls = pc.createScript('playerControls');
 
 PlayerControls.attributes.add('speed', { type: 'number', default: 4 });
 PlayerControls.attributes.add('lookSpeed', { type: 'number', default: 0.2 });
+// the area that triggers game clear
+PlayerControls.attributes.add('goalArea', { type: 'entity' });
 
 PlayerControls.prototype.initialize = function () {
     this.app.mouse.disableContextMenu();
     this.app.mouse.on(pc.EVENT_MOUSEDOWN, this.onMouseDown, this);
     this.app.mouse.on(pc.EVENT_MOUSEMOVE, this.onMouseMove, this);
     this.lastFire = 0;
+    this.reachedGoal = false;
 };
 
 PlayerControls.prototype.onMouseDown = function (e) {
@@ -118,6 +133,18 @@ PlayerControls.prototype.update = function (dt) {
         var r = this.entity.right.clone().scale(right);
         move.add2(f, r).normalize().scale(this.speed * dt);
         this.entity.translate(move);
+    }
+
+    if (this.goalArea && !this.reachedGoal) {
+        var pos = this.entity.getPosition();
+        var gPos = this.goalArea.getPosition();
+        var gScale = this.goalArea.getLocalScale();
+        if (Math.abs(pos.x - gPos.x) < gScale.x / 2 &&
+            Math.abs(pos.z - gPos.z) < gScale.z / 2 &&
+            pos.y <= gPos.y + 1) {
+            this.reachedGoal = true;
+            showEnding();
+        }
     }
 };
 
