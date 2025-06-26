@@ -32,7 +32,11 @@ CREATE TABLE scores (
 );
 ```
 
-4. Place the contents of the `public` directory in your web server's document root. For quick local testing you can simply run `python -m http.server` from the repository root and access `http://localhost:8000/public/`.
+4. Place the contents of the `public` directory in your web server's document root.
+   To try the full ranking flow locally you need a PHP server. A simple option is
+   to run `php -S localhost:8000` from the repository root and access
+   `http://localhost:8000/public/`. Running `python -m http.server` only serves
+   static files and will not execute the PHP scripts used for score submission.
 5. Update credentials in `server/config.php` if necessary.
 
 ## Running
