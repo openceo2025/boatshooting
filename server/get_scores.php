@@ -2,7 +2,7 @@
 require_once 'db.php';
 
 $pdo = getPDO();
-$stmt = $pdo->query('SELECT name, score FROM scores ORDER BY score DESC, id ASC LIMIT 10');
+$stmt = $pdo->query('SELECT name, score FROM scores ORDER BY score DESC, id ASC LIMIT 3');
 $scores = $stmt->fetchAll();
 header('Content-Type: application/json');
 
