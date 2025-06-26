@@ -5,6 +5,12 @@ var ending = document.getElementById('ending');
 var startBtn = document.getElementById('startBtn');
 var shareBtn = document.getElementById('shareBtn');
 var restartBtn = document.getElementById('restartBtn');
+var ranking = document.getElementById('ranking');
+var scoreList = document.getElementById('scoreList');
+var scoreForm = document.getElementById('scoreForm');
+var playerNameInput = document.getElementById('playerName');
+var playerScoreInput = document.getElementById('playerScore');
+var closeRanking = document.getElementById('closeRanking');
 var app;
 
 function startGame() {
@@ -34,14 +40,31 @@ function startGame() {
     box.setLocalPosition(0, 0, 0);
 }
 
-function showEnding() {
+function loadRanking() {
+    fetch('../server/get_scores.php')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            scoreList.innerHTML = '';
+            data.forEach(function(row) {
+                var li = document.createElement('li');
+                li.textContent = row.name + ': ' + row.score;
+                scoreList.appendChild(li);
+            });
+        });
+}
+
+function showEnding(score) {
     canvasContainer.style.display = 'none';
     ending.style.display = 'flex';
+    ranking.style.display = 'flex';
+    playerScoreInput.value = score || 0;
+    loadRanking();
 }
 
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', function() {
     ending.style.display = 'none';
+    ranking.style.display = 'none';
     startGame();
 });
 shareBtn.addEventListener('click', function() {
@@ -49,6 +72,23 @@ shareBtn.addEventListener('click', function() {
     var url = encodeURIComponent(window.location.href);
     window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url,
         '_blank');
+});
+
+scoreForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var params = new URLSearchParams();
+    params.append('name', playerNameInput.value);
+    params.append('score', playerScoreInput.value);
+    fetch('../server/submit_score.php', {
+        method: 'POST',
+        body: params
+    }).then(function() {
+        loadRanking();
+    });
+});
+
+closeRanking.addEventListener('click', function() {
+    ranking.style.display = 'none';
 });
 
 // This would be triggered when the game ends

@@ -32,12 +32,12 @@ CREATE TABLE scores (
 );
 ```
 
-4. Place the contents of the `public` directory in your web server's document root.
+4. Place the contents of the `public` directory in your web server's document root. For quick local testing you can simply run `python -m http.server` from the repository root and access `http://localhost:8000/public/`.
 5. Update credentials in `server/config.php` if necessary.
 
 ## Running
 
-Open `public/index.php` in your browser. The page displays an opening screen. Tapping **Start Game** launches the PlayCanvas app. After the game ends, the score can be submitted via the PHP endpoints. An ending screen provides options to restart and share the game on Twitter.
+Open `public/index.html` in your browser. The page displays an opening screen. Tapping **Start Game** launches the PlayCanvas app. After the game ends, scores are exchanged with the PHP backend via AJAX, and a ranking list is displayed. The ending screen provides options to restart and share the game on Twitter.
 
 ## Notes
 
