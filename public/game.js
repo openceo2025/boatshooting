@@ -104,6 +104,9 @@ function loadRanking() {
 }
 
 function showRanking(score) {
+    if (pc.Mouse.isPointerLocked()) {
+        app.mouse.disablePointerLock();
+    }
     canvasContainer.style.display = 'none';
     joystick.style.display = 'none';
     lookArea.style.display = 'none';
@@ -115,6 +118,9 @@ function showRanking(score) {
 }
 
 function showEnding() {
+    if (pc.Mouse.isPointerLocked()) {
+        app.mouse.disablePointerLock();
+    }
     ranking.style.display = 'none';
     ending.style.display = 'flex';
     if (endingVideo) {
