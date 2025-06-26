@@ -29,15 +29,27 @@ function startGame() {
         app.resizeCanvas();
     });
 
-    // Placeholder for loading FPS Starter Kit
-    // Here you would load PlayCanvas assets and scripts
-    // such as the FPS starter kit, scenes, and player controls.
+    // simple scene setup
+    var light = new pc.Entity('light');
+    light.addComponent('light', {
+        type: 'directional',
+        color: new pc.Color(1, 1, 1)
+    });
+    light.setLocalEulerAngles(45, 45, 0);
+    app.root.addChild(light);
 
-    // Example placeholder entity
-    var box = new pc.Entity('box');
-    box.addComponent('model', { type: 'box' });
-    app.root.addChild(box);
-    box.setLocalPosition(0, 0, 0);
+    var ground = new pc.Entity('ground');
+    ground.addComponent('model', { type: 'box' });
+    ground.setLocalScale(20, 1, 20);
+    ground.setLocalPosition(0, -0.5, 0);
+    app.root.addChild(ground);
+
+    var player = new pc.Entity('player');
+    player.addComponent('camera', { clearColor: new pc.Color(0.4, 0.45, 0.5) });
+    player.addComponent('script');
+    player.script.create('playerControls');
+    player.setLocalPosition(0, 1, 5);
+    app.root.addChild(player);
 }
 
 function loadRanking() {
@@ -60,6 +72,78 @@ function showEnding(score) {
     playerScoreInput.value = score || 0;
     loadRanking();
 }
+
+// player movement and shooting logic
+var PlayerControls = pc.createScript('playerControls');
+
+PlayerControls.attributes.add('speed', { type: 'number', default: 4 });
+PlayerControls.attributes.add('lookSpeed', { type: 'number', default: 0.2 });
+
+PlayerControls.prototype.initialize = function () {
+    this.app.mouse.disableContextMenu();
+    this.app.mouse.on(pc.EVENT_MOUSEDOWN, this.onMouseDown, this);
+    this.app.mouse.on(pc.EVENT_MOUSEMOVE, this.onMouseMove, this);
+    this.lastFire = 0;
+};
+
+PlayerControls.prototype.onMouseDown = function (e) {
+    if (!pc.Mouse.isPointerLocked()) {
+        this.app.mouse.enablePointerLock();
+    } else if (e.button === pc.MOUSEBUTTON_LEFT) {
+        this.shoot();
+    }
+};
+
+PlayerControls.prototype.onMouseMove = function (e) {
+    if (pc.Mouse.isPointerLocked()) {
+        this.entity.rotate(0, -e.dx * this.lookSpeed, 0);
+        this.entity.rotateLocal(-e.dy * this.lookSpeed, 0, 0);
+    }
+};
+
+PlayerControls.prototype.update = function (dt) {
+    var forward = 0;
+    var right = 0;
+    if (this.app.keyboard.isPressed(pc.KEY_W)) forward += 1;
+    if (this.app.keyboard.isPressed(pc.KEY_S)) forward -= 1;
+    if (this.app.keyboard.isPressed(pc.KEY_D)) right += 1;
+    if (this.app.keyboard.isPressed(pc.KEY_A)) right -= 1;
+
+    var move = new pc.Vec3();
+    if (forward !== 0 || right !== 0) {
+        var f = this.entity.forward.clone().scale(forward);
+        var r = this.entity.right.clone().scale(right);
+        move.add2(f, r).normalize().scale(this.speed * dt);
+        this.entity.translate(move);
+    }
+};
+
+PlayerControls.prototype.shoot = function () {
+    var bullet = new pc.Entity('bullet');
+    bullet.addComponent('model', { type: 'sphere' });
+    bullet.setLocalScale(0.1, 0.1, 0.1);
+    bullet.setPosition(this.entity.getPosition());
+    bullet.setRotation(this.entity.getRotation());
+    bullet.addComponent('script');
+    bullet.script.create('bulletMover');
+    this.app.root.addChild(bullet);
+};
+
+var BulletMover = pc.createScript('bulletMover');
+BulletMover.attributes.add('speed', { type: 'number', default: 20 });
+BulletMover.attributes.add('life', { type: 'number', default: 2 });
+
+BulletMover.prototype.initialize = function () {
+    this.elapsed = 0;
+};
+
+BulletMover.prototype.update = function (dt) {
+    this.entity.translateLocal(0, 0, -this.speed * dt);
+    this.elapsed += dt;
+    if (this.elapsed > this.life) {
+        this.entity.destroy();
+    }
+};
 
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', function() {
