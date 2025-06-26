@@ -17,6 +17,9 @@ var lookLastY = 0;
 var lookStartX = 0;
 var lookStartY = 0;
 var lookStartTime = 0;
+var enemies = [];
+var player = null;
+var currentScore = 0;
 // timestamp when the current gameplay session started
 var gameStartTime = 0;
 // initialize PlayCanvas application upfront so scripts can be registered
@@ -41,6 +44,8 @@ function startGame() {
     moveVec.y = 0;
     // record when gameplay starts to calculate score later
     gameStartTime = Date.now();
+    currentScore = 0;
+    enemies = [];
 
     if (!appStarted) {
         app.start();
@@ -78,13 +83,18 @@ function startGame() {
     goalArea.model.material = red;
     app.root.addChild(goalArea);
 
-    var player = new pc.Entity('player');
+    player = new pc.Entity('player');
     player.addComponent('camera', { clearColor: new pc.Color(0.4, 0.45, 0.5) });
     player.addComponent('script');
     // pass the goal area entity to the player controller
     player.script.create('playerControls', { attributes: { goalArea: goalArea } });
     player.setLocalPosition(0, 1, 5);
     app.root.addChild(player);
+
+    // spawn a few enemies
+    for (var i = 0; i < 3; i++) {
+        spawnEnemy();
+    }
 }
 
 var lastScore = 0;
@@ -107,6 +117,19 @@ function showEnding(score) {
         endingVideo.style.display = 'block';
         endingVideo.play().catch(function(){});
     }
+}
+
+function spawnEnemy() {
+    var enemy = new pc.Entity('enemy');
+    enemy.addComponent('model', { type: 'box' });
+    enemy.setLocalScale(0.5, 1, 0.5);
+    enemy.addComponent('script');
+    enemy.script.create('enemyController', { attributes: { player: player } });
+    var x = (Math.random() - 0.5) * 16;
+    var z = (Math.random() - 0.5) * 16;
+    enemy.setPosition(x, 0.5, z);
+    app.root.addChild(enemy);
+    enemies.push(enemy);
 }
 
 // player movement and shooting logic
@@ -174,7 +197,7 @@ PlayerControls.prototype.update = function (dt) {
             var elapsed = (Date.now() - gameStartTime) / 1000;
             // simple score: start from 1000 and decrease over time
             var score = Math.max(1, Math.floor(1000 - elapsed * 10));
-            showEnding(score);
+            showEnding(score + currentScore);
         }
     }
 };
@@ -186,13 +209,40 @@ PlayerControls.prototype.shoot = function () {
     bullet.setPosition(this.entity.getPosition());
     bullet.setRotation(this.entity.getRotation());
     bullet.addComponent('script');
-    bullet.script.create('bulletMover');
+    bullet.script.create('bulletMover', { attributes: { fromPlayer: true } });
     this.app.root.addChild(bullet);
+};
+
+var EnemyController = pc.createScript('enemyController');
+EnemyController.attributes.add('player', { type: 'entity' });
+EnemyController.attributes.add('shootInterval', { type: 'number', default: 2 });
+
+EnemyController.prototype.initialize = function () {
+    this.elapsed = 0;
+};
+
+EnemyController.prototype.update = function (dt) {
+    if (this.player) {
+        this.entity.lookAt(this.player.getPosition());
+    }
+    this.elapsed += dt;
+    if (this.elapsed > this.shootInterval) {
+        this.elapsed = 0;
+        var bullet = new pc.Entity('enemyBullet');
+        bullet.addComponent('model', { type: 'sphere' });
+        bullet.setLocalScale(0.1, 0.1, 0.1);
+        bullet.setPosition(this.entity.getPosition());
+        bullet.setRotation(this.entity.getRotation());
+        bullet.addComponent('script');
+        bullet.script.create('bulletMover');
+        this.app.root.addChild(bullet);
+    }
 };
 
 var BulletMover = pc.createScript('bulletMover');
 BulletMover.attributes.add('speed', { type: 'number', default: 20 });
 BulletMover.attributes.add('life', { type: 'number', default: 2 });
+BulletMover.attributes.add('fromPlayer', { type: 'boolean', default: false });
 
 BulletMover.prototype.initialize = function () {
     this.elapsed = 0;
@@ -201,6 +251,27 @@ BulletMover.prototype.initialize = function () {
 BulletMover.prototype.update = function (dt) {
     this.entity.translateLocal(0, 0, -this.speed * dt);
     this.elapsed += dt;
+
+    if (this.fromPlayer) {
+        for (var i = enemies.length - 1; i >= 0; i--) {
+            var enemy = enemies[i];
+            if (!enemy) continue;
+            if (this.entity.getPosition().distance(enemy.getPosition()) < 0.5) {
+                enemy.destroy();
+                enemies.splice(i, 1);
+                currentScore += 100;
+                this.entity.destroy();
+                return;
+            }
+        }
+    } else if (player) {
+        if (this.entity.getPosition().distance(player.getPosition()) < 0.5) {
+            showEnding(currentScore);
+            this.entity.destroy();
+            return;
+        }
+    }
+
     if (this.elapsed > this.life) {
         this.entity.destroy();
     }
