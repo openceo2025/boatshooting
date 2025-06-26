@@ -2,6 +2,7 @@
 var canvasContainer = document.getElementById('canvas-container');
 var opening = document.getElementById('opening');
 var ending = document.getElementById('ending');
+var endingVideo = document.getElementById('endingVideo');
 var startBtn = document.getElementById('startBtn');
 var shareBtn = document.getElementById('shareBtn');
 var restartBtn = document.getElementById('restartBtn');
@@ -88,26 +89,38 @@ function startGame() {
 }
 
 function loadRanking() {
-    fetch('../server/get_scores.php')
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            scoreList.innerHTML = '';
-            data.forEach(function(row) {
-                var li = document.createElement('li');
-                li.textContent = row.name + ': ' + row.score;
-                scoreList.appendChild(li);
-            });
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '../server/get_scores.php', false); // sync
+    xhr.send(null);
+    if (xhr.status === 200) {
+        var data = JSON.parse(xhr.responseText);
+        scoreList.innerHTML = '';
+        data.forEach(function(row, idx) {
+            var li = document.createElement('li');
+            li.textContent = (idx + 1) + '. ' + row.name + ': ' + row.score;
+            scoreList.appendChild(li);
         });
+    }
 }
 
-function showEnding(score) {
+function showRanking(score) {
     canvasContainer.style.display = 'none';
     joystick.style.display = 'none';
     lookArea.style.display = 'none';
-    ending.style.display = 'flex';
+    ending.style.display = 'none';
     ranking.style.display = 'flex';
+    scoreForm.style.display = 'block';
     playerScoreInput.value = score || 0;
     loadRanking();
+}
+
+function showEnding() {
+    ranking.style.display = 'none';
+    ending.style.display = 'flex';
+    if (endingVideo) {
+        endingVideo.style.display = 'block';
+        endingVideo.play().catch(function(){});
+    }
 }
 
 // player movement and shooting logic
@@ -172,7 +185,7 @@ PlayerControls.prototype.update = function (dt) {
             Math.abs(pos.z - gPos.z) < gScale.z / 2 &&
             pos.y <= gPos.y + 1) {
             this.reachedGoal = true;
-            showEnding();
+            showRanking();
         }
     }
 };
@@ -222,16 +235,17 @@ scoreForm.addEventListener('submit', function(e) {
     var params = new URLSearchParams();
     params.append('name', playerNameInput.value);
     params.append('score', playerScoreInput.value);
-    fetch('../server/submit_score.php', {
-        method: 'POST',
-        body: params
-    }).then(function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '../server/submit_score.php', false); // sync
+    xhr.send(params);
+    if (xhr.status === 200) {
+        scoreForm.style.display = 'none';
         loadRanking();
-    });
+    }
 });
 
 closeRanking.addEventListener('click', function() {
-    ranking.style.display = 'none';
+    showEnding();
 });
 
 // joystick control
