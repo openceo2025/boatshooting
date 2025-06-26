@@ -11,23 +11,25 @@ var scoreForm = document.getElementById('scoreForm');
 var playerNameInput = document.getElementById('playerName');
 var playerScoreInput = document.getElementById('playerScore');
 var closeRanking = document.getElementById('closeRanking');
-var app;
+var app = new pc.Application(canvasContainer, {
+    mouse: new pc.Mouse(canvasContainer),
+    touch: new pc.TouchDevice(canvasContainer)
+});
+app.start();
+
+app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+app.setCanvasResolution(pc.RESOLUTION_AUTO);
+window.addEventListener('resize', function () {
+    app.resizeCanvas();
+});
 
 function startGame() {
     opening.style.display = 'none';
     canvasContainer.style.display = 'block';
 
-    app = new pc.Application(canvasContainer, {
-        mouse: new pc.Mouse(canvasContainer),
-        touch: new pc.TouchDevice(canvasContainer)
-    });
-    app.start();
-
-    app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
-    app.setCanvasResolution(pc.RESOLUTION_AUTO);
-    window.addEventListener('resize', function () {
-        app.resizeCanvas();
-    });
+    while (app.root.children.length > 0) {
+        app.root.children[0].destroy();
+    }
 
     // simple scene setup
     var light = new pc.Entity('light');
