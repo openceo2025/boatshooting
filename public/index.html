@@ -9,7 +9,6 @@
         #canvas-container { width: 100%; height: 100%; display: none; }
         #opening { position: absolute; width: 100%; height: 100%; background: black; color: white; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         #ending { position: absolute; width: 100%; height: 100%; background: black; color: white; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        #ranking { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: none; justify-content: center; align-items: center; flex-direction: column; }
         #joystick, #lookArea { position: absolute; display: none; touch-action: none; }
         #joystick { bottom: 20px; left: 20px; width: 120px; height: 120px; border-radius: 60px; background: rgba(255,255,255,0.2); }
         #stick { position: absolute; width: 60px; height: 60px; top: 30px; left: 30px; border-radius: 30px; background: rgba(255,255,255,0.5); }
@@ -26,19 +25,10 @@
     <div id="lookArea"></div>
     <div id="ending">
         <h2>Game Clear</h2>
+        <div id="finalScore"></div>
         <video id="endingVideo" src="ending.mp4" style="display:none" width="320" height="240"></video>
         <button id="shareBtn">Share on Twitter</button>
         <button id="restartBtn">Restart</button>
-    </div>
-    <div id="ranking">
-        <h2>Ranking</h2>
-        <ol id="scoreList"></ol>
-        <form id="scoreForm">
-            <input type="text" id="playerName" placeholder="Name" required>
-            <input type="hidden" id="playerScore">
-            <button type="submit">Submit Score</button>
-        </form>
-        <button id="closeRanking">Close</button>
     </div>
 
     <script src="https://code.playcanvas.com/playcanvas-stable.min.js"></script>

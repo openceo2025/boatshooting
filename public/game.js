@@ -6,12 +6,7 @@ var endingVideo = document.getElementById('endingVideo');
 var startBtn = document.getElementById('startBtn');
 var shareBtn = document.getElementById('shareBtn');
 var restartBtn = document.getElementById('restartBtn');
-var ranking = document.getElementById('ranking');
-var scoreList = document.getElementById('scoreList');
-var scoreForm = document.getElementById('scoreForm');
-var playerNameInput = document.getElementById('playerName');
-var playerScoreInput = document.getElementById('playerScore');
-var closeRanking = document.getElementById('closeRanking');
+var finalScore = document.getElementById('finalScore');
 var joystick = document.getElementById('joystick');
 var stick = document.getElementById('stick');
 var lookArea = document.getElementById('lookArea');
@@ -92,40 +87,21 @@ function startGame() {
     app.root.addChild(player);
 }
 
-function loadRanking() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '../server/get_scores.php', false); // sync
-    xhr.send(null);
-    if (xhr.status === 200) {
-        var data = JSON.parse(xhr.responseText);
-        scoreList.innerHTML = '';
-        data.forEach(function(row, idx) {
-            var li = document.createElement('li');
-            li.textContent = (idx + 1) + '. ' + row.name + ': ' + row.score;
-            scoreList.appendChild(li);
-        });
-    }
-}
+var lastScore = 0;
 
-function showRanking(score) {
+function showEnding(score) {
+    if (typeof score === 'number') {
+        lastScore = score;
+        if (finalScore) {
+            finalScore.textContent = 'Score: ' + lastScore;
+        }
+    }
     if (pc.Mouse.isPointerLocked()) {
         app.mouse.disablePointerLock();
     }
     canvasContainer.style.display = 'none';
     joystick.style.display = 'none';
     lookArea.style.display = 'none';
-    ending.style.display = 'none';
-    ranking.style.display = 'flex';
-    scoreForm.style.display = 'block';
-    playerScoreInput.value = score || 0;
-    loadRanking();
-}
-
-function showEnding() {
-    if (pc.Mouse.isPointerLocked()) {
-        app.mouse.disablePointerLock();
-    }
-    ranking.style.display = 'none';
     ending.style.display = 'flex';
     if (endingVideo) {
         endingVideo.style.display = 'block';
@@ -198,7 +174,7 @@ PlayerControls.prototype.update = function (dt) {
             var elapsed = (Date.now() - gameStartTime) / 1000;
             // simple score: start from 1000 and decrease over time
             var score = Math.max(1, Math.floor(1000 - elapsed * 10));
-            showRanking(score);
+            showEnding(score);
         }
     }
 };
@@ -233,33 +209,15 @@ BulletMover.prototype.update = function (dt) {
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', function() {
     ending.style.display = 'none';
-    ranking.style.display = 'none';
     startGame();
 });
 shareBtn.addEventListener('click', function() {
-    var text = encodeURIComponent('I just played Boat Shooting!');
+    var text = encodeURIComponent('I scored ' + lastScore + ' in Boat Shooting!');
     var url = encodeURIComponent(window.location.href);
     window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url,
         '_blank');
 });
 
-scoreForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    var params = new URLSearchParams();
-    params.append('name', playerNameInput.value);
-    params.append('score', playerScoreInput.value);
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '../server/submit_score.php', false); // sync
-    xhr.send(params);
-    if (xhr.status === 200) {
-        scoreForm.style.display = 'none';
-        loadRanking();
-    }
-});
-
-closeRanking.addEventListener('click', function() {
-    showEnding();
-});
 
 // joystick control
 joystick.addEventListener('touchstart', function(e) {
