@@ -15,6 +15,7 @@ var app = new pc.Application(canvasContainer, {
     mouse: new pc.Mouse(canvasContainer),
     touch: new pc.TouchDevice(canvasContainer)
 });
+app.keyboard = new pc.Keyboard(window);
 app.start();
 
 app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
