@@ -21,7 +21,18 @@ var lookLastY = 0;
 var lookStartX = 0;
 var lookStartY = 0;
 var lookStartTime = 0;
-var app; // initialized on demand
+// initialize PlayCanvas application upfront so scripts can be registered
+var app = new pc.Application(canvasContainer, {
+    mouse: new pc.Mouse(canvasContainer),
+    touch: new pc.TouchDevice(canvasContainer)
+});
+app.keyboard = new pc.Keyboard(window);
+app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+app.setCanvasResolution(pc.RESOLUTION_AUTO);
+window.addEventListener('resize', function () {
+    app.resizeCanvas();
+});
+var appStarted = false;
 
 function startGame() {
     opening.style.display = 'none';
@@ -31,18 +42,9 @@ function startGame() {
     moveVec.x = 0;
     moveVec.y = 0;
 
-    if (!app) {
-        app = new pc.Application(canvasContainer, {
-            mouse: new pc.Mouse(canvasContainer),
-            touch: new pc.TouchDevice(canvasContainer)
-        });
-        app.keyboard = new pc.Keyboard(window);
-        app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
-        app.setCanvasResolution(pc.RESOLUTION_AUTO);
-        window.addEventListener('resize', function () {
-            app.resizeCanvas();
-        });
+    if (!appStarted) {
         app.start();
+        appStarted = true;
     } else {
         app.resizeCanvas();
         while (app.root.children.length > 0) {
